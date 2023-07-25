@@ -2,8 +2,8 @@ struct stat;
 
 // system calls
 int fork(void);
-int exit(int) __attribute__((noreturn));
-int wait(int*);
+int exit(int, char*) __attribute__((noreturn)); //ass1 task3
+int wait(int*, char*); //ass1 task3
 int pipe(int*);
 int write(int, const void*, int);
 int read(int, void*, int);
@@ -22,6 +22,12 @@ int getpid(void);
 char* sbrk(int);
 int sleep(int);
 int uptime(void);
+int memsize(void); //ass1 task2
+int set_ps_priority(int); //ass1 task5 changed the signuture to int- will return 0 on success and -1 on failure
+int set_cfs_priority(int); //ass1 task6
+int get_cfs_stats(int,int*,int*,int*,int*); //ass1 task6
+int set_policy(int); //ass1 task7
+
 
 // ulib.c
 int stat(const char*, struct stat*);

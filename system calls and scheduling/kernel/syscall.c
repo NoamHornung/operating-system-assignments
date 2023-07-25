@@ -101,6 +101,12 @@ extern uint64 sys_unlink(void);
 extern uint64 sys_link(void);
 extern uint64 sys_mkdir(void);
 extern uint64 sys_close(void);
+extern uint64 sys_memsize(void);    //ass1 task2
+extern uint64 sys_set_ps_priority(void); //ass1 task5
+extern uint64 sys_set_cfs_priority(void);  //ass1 task6
+extern uint64 sys_get_cfs_stats(void); //ass1 task6
+extern uint64 sys_set_policy(void); //ass1 task7
+
 
 // An array mapping syscall numbers from syscall.h
 // to the function that handles the system call.
@@ -126,6 +132,12 @@ static uint64 (*syscalls[])(void) = {
 [SYS_link]    sys_link,
 [SYS_mkdir]   sys_mkdir,
 [SYS_close]   sys_close,
+[SYS_memsize]   sys_memsize, //ass1 task2
+[SYS_set_ps_priority]   sys_set_ps_priority, //ass1 task5
+[SYS_set_cfs_priority]   sys_set_cfs_priority, //ass1 task6
+[SYS_get_cfs_stats]   sys_get_cfs_stats, //ass1 task6
+[SYS_set_policy] sys_set_policy, //ass1 task7
+
 };
 
 void

@@ -54,7 +54,7 @@ usertrap(void)
     // system call
 
     if(killed(p))
-      exit(-1);
+      exit(-1,"");
 
     // sepc points to the ecall instruction,
     // but we want to return to the next instruction.
@@ -74,12 +74,23 @@ usertrap(void)
   }
 
   if(killed(p))
-    exit(-1);
+    exit(-1,"");
 
   // give up the CPU if this is a timer interrupt.
-  if(which_dev == 2)
-    yield();
+  if(which_dev == 2){
+    //update_stats(); //ass1 task6
+    
+    // if(cpuid()==0){
+    //   update_stats();
+    // }
 
+    acquire(&p->lock);
+    p->accumulator+=p->ps_priority; //ass1 task5 
+    release(&p->lock);
+    
+    yield();
+    
+  }
   usertrapret();
 }
 
@@ -151,9 +162,22 @@ kerneltrap()
   }
 
   // give up the CPU if this is a timer interrupt.
-  if(which_dev == 2 && myproc() != 0 && myproc()->state == RUNNING)
-    yield();
+  if(which_dev == 2) {
+    // if(cpuid()==0){
+    //   update_stats();
+    // }
+    //update_stats(); //ass1 task6
+    if(myproc() != 0 && myproc()->state == RUNNING){
+      //update_stats();
+      struct proc *p = myproc();
+      acquire(&p->lock);
 
+      p->accumulator+=p->ps_priority; //ass1 task5
+      release(&p->lock);
+      
+      yield();
+    }
+  }
   // the yield() may have caused some traps to occur,
   // so restore trap registers for use by kernelvec.S's sepc instruction.
   w_sepc(sepc);
@@ -165,14 +189,16 @@ clockintr()
 {
   acquire(&tickslock);
   ticks++;
+  update_stats(); //ass1 task6
   wakeup(&ticks);
+  //update_stats(); //ass1 task6
   release(&tickslock);
 }
 
 // check if it's an external interrupt or software interrupt,
 // and handle it.
 // returns 2 if timer interrupt,
-// 1 if other device,
+// 1 if other device
 // 0 if not recognized.
 int
 devintr()
@@ -212,6 +238,7 @@ devintr()
     // acknowledge the software interrupt by clearing
     // the SSIP bit in sip.
     w_sip(r_sip() & ~2);
+
 
     return 2;
   } else {

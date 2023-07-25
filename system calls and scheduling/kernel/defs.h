@@ -9,6 +9,7 @@ struct sleeplock;
 struct stat;
 struct superblock;
 
+
 // bio.c
 void            binit(void);
 struct buf*     bread(uint, uint);
@@ -83,7 +84,7 @@ void            printfinit(void);
 
 // proc.c
 int             cpuid(void);
-void            exit(int);
+void            exit(int, char*); //ass1 task3
 int             fork(void);
 int             growproc(int);
 void            proc_mapstacks(pagetable_t);
@@ -96,16 +97,22 @@ struct cpu*     mycpu(void);
 struct cpu*     getmycpu(void);
 struct proc*    myproc();
 void            procinit(void);
-void            scheduler(void) __attribute__((noreturn));
+void            scheduler(void); //__attribute__((noreturn));
 void            sched(void);
 void            sleep(void*, struct spinlock*);
 void            userinit(void);
-int             wait(uint64);
+int             wait(uint64, uint64); //ass1 task3
 void            wakeup(void*);
 void            yield(void);
 int             either_copyout(int user_dst, uint64 dst, void *src, uint64 len);
 int             either_copyin(void *dst, int user_src, uint64 src, uint64 len);
 void            procdump(void);
+int             set_ps_priority(int); //ass1 task5
+int             set_cfs_priority(int); //ass1 task6
+long long       find_min_acc(struct proc*); //ass1 task5
+void            update_stats(void); //ass1 task6
+int             get_cfs_stats(int pid, uint64 cfs_priority_adrr,uint64 rtime_addr,uint64 stime_addr,uint64 retime_addr); //ass1 task6
+int             set_policy(int); //ass1 task7
 
 // swtch.S
 void            swtch(struct context*, struct context*);
