@@ -20,8 +20,12 @@ main(void)
     mknod("console", CONSOLE, 0);
     open("console", O_RDWR);
   }
+
   dup(0);  // stdout
   dup(0);  // stderr
+
+  //ass4
+  mknod("random", RANDOM, 0);
 
   for(;;){
     printf("init: starting sh\n");

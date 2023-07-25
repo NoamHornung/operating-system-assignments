@@ -33,6 +33,7 @@ void            fileinit(void);
 int             fileread(struct file*, uint64, int n);
 int             filestat(struct file*, uint64 addr);
 int             filewrite(struct file*, uint64, int n);
+int             fileseek(struct file*, int, int);
 
 // fs.c
 void            fsinit(int);
@@ -58,6 +59,12 @@ void            itrunc(struct inode*);
 void            ramdiskinit(void);
 void            ramdiskintr(void);
 void            ramdiskrw(struct buf*);
+
+//random.c
+int             randomread(int, uint64, int);
+int             randomwrite(int, uint64, int);
+void            randominit(void);
+uint8           lfsr_char(uint8);
 
 // kalloc.c
 void*           kalloc(void);
@@ -184,6 +191,8 @@ void            plic_complete(int);
 void            virtio_disk_init(void);
 void            virtio_disk_rw(struct buf *, int);
 void            virtio_disk_intr(void);
+
+
 
 // number of elements in fixed-size array
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))
