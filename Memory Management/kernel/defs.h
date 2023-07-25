@@ -8,6 +8,9 @@ struct spinlock;
 struct sleeplock;
 struct stat;
 struct superblock;
+struct memory_page_entry;
+struct swap_file_entry;
+struct paging_metadata;
 
 // bio.c
 void            binit(void);
@@ -33,7 +36,8 @@ void            fileinit(void);
 int             fileread(struct file*, uint64, int n);
 int             filestat(struct file*, uint64 addr);
 int             filewrite(struct file*, uint64, int n);
-
+int             kfileread(struct file*, uint64, int n);
+int             kfilewrite(struct file*, uint64, int n);
 // fs.c
 void            fsinit(int);
 int             dirlink(struct inode*, char*, uint);
@@ -53,6 +57,11 @@ int             readi(struct inode*, int, uint64, uint, uint);
 void            stati(struct inode*, struct stat*);
 int             writei(struct inode*, int, uint64, uint, uint);
 void            itrunc(struct inode*);
+int		        createSwapFile(struct proc* p);
+int	          	readFromSwapFile(struct proc * p, char* buffer, uint placeOnFile, uint size);
+int		        writeToSwapFile(struct proc* p, char* buffer, uint placeOnFile, uint size);
+int		        removeSwapFile(struct proc* p);
+int             copy_swap_file(struct proc *from, struct proc *to);
 
 // ramdisk.c
 void            ramdiskinit(void);
@@ -141,6 +150,10 @@ int             fetchstr(uint64, char*, int);
 int             fetchaddr(uint64, uint64*);
 void            syscall();
 
+// sysfile
+struct inode*	create(char *path, short type, short major, short minor);
+int				isdirempty(struct inode *dp);
+
 // trap.c
 extern uint     ticks;
 void            trapinit(void);
@@ -173,6 +186,21 @@ uint64          walkaddr(pagetable_t, uint64);
 int             copyout(pagetable_t, uint64, char *, uint64);
 int             copyin(pagetable_t, char *, uint64, uint64);
 int             copyinstr(pagetable_t, char *, uint64, uint64);
+//task2
+int             remove_page_from_memory(struct proc*, uint64);
+int             remove_page_from_swapfile(struct proc*, uint64);
+int             add_to_memory(struct proc*,uint64 );
+int             swap_out_memory(struct proc*);
+int             swap_in_memory(struct proc*, uint64);
+void            print_memory(struct proc*);
+void            print_swap_file(struct proc*);
+void            update_age(struct proc*);
+int             index_to_swap(struct proc*);
+int             index_to_swap_NFUA(struct proc*);
+int             index_to_swap_LAPA(struct proc*);
+int             index_to_swap_SCFIFO(struct proc*);
+int             countSetBits(uint);
+int             find_min_order(struct proc*);
 
 // plic.c
 void            plicinit(void);
@@ -187,3 +215,5 @@ void            virtio_disk_intr(void);
 
 // number of elements in fixed-size array
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))
+
+//vm_paging.c

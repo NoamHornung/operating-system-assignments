@@ -3,6 +3,7 @@
 #include "user/user.h"
 #include "kernel/param.h"
 
+
 // Memory allocator by Kernighan and Ritchie,
 // The C programming Language, 2nd ed.  Section 8.7.
 
@@ -30,12 +31,12 @@ free(void *ap)
   for(p = freep; !(bp > p && bp < p->s.ptr); p = p->s.ptr)
     if(p >= p->s.ptr && (bp > p || bp < p->s.ptr))
       break;
-  if(bp + bp->s.size == p->s.ptr){
+  if(bp + bp->s.size == p->s.ptr){  // check the following block
     bp->s.size += p->s.ptr->s.size;
     bp->s.ptr = p->s.ptr->s.ptr;
   } else
     bp->s.ptr = p->s.ptr;
-  if(p + p->s.size == bp){
+  if(p + p->s.size == bp){ //check the previous block
     p->s.size += bp->s.size;
     p->s.ptr = bp->s.ptr;
   } else
@@ -72,10 +73,10 @@ malloc(uint nbytes)
     base.s.size = 0;
   }
   for(p = prevp->s.ptr; ; prevp = p, p = p->s.ptr){
-    if(p->s.size >= nunits){
+    if(p->s.size >= nunits){ //perform allocation
       if(p->s.size == nunits)
         prevp->s.ptr = p->s.ptr;
-      else {
+      else { //allocate tail of the block
         p->s.size -= nunits;
         p += p->s.size;
         p->s.size = nunits;

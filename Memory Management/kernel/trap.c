@@ -67,7 +67,18 @@ usertrap(void)
     syscall();
   } else if((which_dev = devintr()) != 0){
     // ok
-  } else {
+  
+  } //task2
+  #ifndef NONE
+  else if(r_scause() == 13 || r_scause() == 15){
+    //printf("page fault\n");
+    uint64 address = r_stval();
+    if(swap_in_memory(p, address)==-1){
+      panic("swap_in_memory failed\n");
+    }
+  }
+  #endif 
+  else {
     printf("usertrap(): unexpected scause %p pid=%d\n", r_scause(), p->pid);
     printf("            sepc=%p stval=%p\n", r_sepc(), r_stval());
     setkilled(p);

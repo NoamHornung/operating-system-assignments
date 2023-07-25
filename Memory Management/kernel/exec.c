@@ -31,6 +31,43 @@ exec(char *path, char **argv)
   pagetable_t pagetable = 0, oldpagetable;
   struct proc *p = myproc();
 
+
+  //task2
+  //backing up the metadate
+  #ifndef NONE
+  struct paging_metadata *pmd =&p->paging_metadata;
+  int num_in_memory = pmd->num_in_memory;
+  int num_in_swapfile = pmd->num_in_swap;
+  int order_counter = pmd->order_counter;
+  struct memory_page_entry b_memory_page_entries[MAX_PSYC_PAGES];
+  for(int i=0; i< MAX_PSYC_PAGES; i++){
+    b_memory_page_entries[i] = pmd->memory_page_entries[i];
+  }
+  struct swap_file_entry b_swap_file_entries[MAX_TOTAL_PAGES-MAX_PSYC_PAGES];
+  for(int i=0; i< MAX_TOTAL_PAGES-MAX_PSYC_PAGES; i++){
+    b_swap_file_entries[i] = pmd->swap_file_entries[i];
+  }
+
+  pmd->num_in_memory = 0;
+  pmd->num_in_swap = 0;
+  pmd->order_counter = 0;
+  for(int i=0; i< MAX_TOTAL_PAGES-MAX_PSYC_PAGES; i++){
+    struct swap_file_entry *sfe = &pmd->swap_file_entries[i];
+    sfe->va = 0;
+    sfe->offset = 0;
+    sfe->present = 0;
+  }
+  for(int i=0; i< MAX_PSYC_PAGES; i++){
+    struct memory_page_entry *mpe = &pmd->memory_page_entries[i];
+    mpe->present = 0;
+    mpe->va = 0;
+    mpe->age = 0;
+    mpe->offset = 0;
+    mpe->order = 0;
+  }
+  #endif
+
+
   begin_op();
 
   if((ip = namei(path)) == 0){
@@ -48,6 +85,9 @@ exec(char *path, char **argv)
 
   if((pagetable = proc_pagetable(p)) == 0)
     goto bad;
+
+  
+
 
   // Load program into memory.
   for(i=0, off=elf.phoff; i<elf.phnum; i++, off+=sizeof(ph)){
@@ -119,6 +159,14 @@ exec(char *path, char **argv)
     if(*s == '/')
       last = s+1;
   safestrcpy(p->name, last, sizeof(p->name));
+
+  //task2
+  #ifndef NONE
+  if(p->pid>2 && !(p->name[0]=='s' && p->name[1]=='h' && p->name[3]=='\000')){
+    removeSwapFile(p);
+    createSwapFile(p);
+  }
+  #endif
     
   // Commit to the user image.
   oldpagetable = p->pagetable;
@@ -137,6 +185,20 @@ exec(char *path, char **argv)
     iunlockput(ip);
     end_op();
   }
+
+  #ifndef NONE
+  //task2 - restore the metadata
+  pmd->num_in_memory = num_in_memory;
+  pmd->num_in_swap = num_in_swapfile;
+  pmd->order_counter = order_counter;
+  for(int i=0; i< MAX_TOTAL_PAGES-MAX_PSYC_PAGES; i++){
+    pmd->swap_file_entries[i]=b_swap_file_entries[i];
+  }
+  for(int i=0; i< MAX_PSYC_PAGES; i++){
+    pmd->memory_page_entries[i]= b_memory_page_entries[i];
+  }
+  #endif
+
   return -1;
 }
 

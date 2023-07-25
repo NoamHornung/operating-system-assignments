@@ -81,6 +81,28 @@ struct trapframe {
 
 enum procstate { UNUSED, USED, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
 
+struct memory_page_entry{
+  uint64 va;
+  uint64 offset;
+  int present;
+  uint age;
+  int order;
+};
+
+struct swap_file_entry{
+  uint64 va;
+  uint64 offset;
+  int present;
+};
+
+struct paging_metadata{
+  int num_in_memory;
+  int order_counter;
+  int num_in_swap;
+  struct memory_page_entry memory_page_entries[MAX_PSYC_PAGES];
+  struct swap_file_entry swap_file_entries[MAX_TOTAL_PAGES-MAX_PSYC_PAGES];
+};
+
 // Per-process state
 struct proc {
   struct spinlock lock;
@@ -104,4 +126,8 @@ struct proc {
   struct file *ofile[NOFILE];  // Open files
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
+
+  struct file *swapFile;
+  struct paging_metadata paging_metadata;
 };
+

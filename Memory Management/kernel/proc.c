@@ -6,6 +6,7 @@
 #include "proc.h"
 #include "defs.h"
 
+
 struct cpu cpus[NCPU];
 
 struct proc proc[NPROC];
@@ -140,6 +141,7 @@ found:
     return 0;
   }
 
+
   // Set up new context to start executing at forkret,
   // which returns to user space.
   memset(&p->context, 0, sizeof(p->context));
@@ -169,6 +171,29 @@ freeproc(struct proc *p)
   p->killed = 0;
   p->xstate = 0;
   p->state = UNUSED;
+
+  //ass3 - reset paging metadata
+  #ifndef NONE
+  if(p->swapFile != 0){
+    removeSwapFile(p);
+  }
+  p->swapFile = 0;
+  p->paging_metadata.num_in_memory= 0;
+  p->paging_metadata.order_counter= 0;
+  p->paging_metadata.num_in_swap= 0;
+  for(int i=0; i< MAX_PSYC_PAGES; i++){
+    p->paging_metadata.memory_page_entries[i].present = 0;
+    p->paging_metadata.memory_page_entries[i].va = 0;
+    p->paging_metadata.memory_page_entries[i].age = 0;
+    p->paging_metadata.memory_page_entries[i].offset = 0;
+    p->paging_metadata.memory_page_entries[i].order = 0;
+  }
+  for(int i=0; i< MAX_TOTAL_PAGES-MAX_PSYC_PAGES; i++){
+    p->paging_metadata.swap_file_entries[i].present = 0;
+    p->paging_metadata.swap_file_entries[i].va = 0;
+    p->paging_metadata.swap_file_entries[i].offset = 0;
+  }
+  #endif
 }
 
 // Create a user page table for a given process, with no user memory,
@@ -288,6 +313,7 @@ fork(void)
     return -1;
   }
 
+
   // Copy user memory from parent to child.
   if(uvmcopy(p->pagetable, np->pagetable, p->sz) < 0){
     freeproc(np);
@@ -302,6 +328,8 @@ fork(void)
   // Cause fork to return 0 in the child.
   np->trapframe->a0 = 0;
 
+
+
   // increment reference counts on open file descriptors.
   for(i = 0; i < NOFILE; i++)
     if(p->ofile[i])
@@ -313,6 +341,24 @@ fork(void)
   pid = np->pid;
 
   release(&np->lock);
+
+  #ifndef NONE
+  //task2
+  if(p->pid >2 && p->swapFile!=0 && !(p->name[0]=='s' && p->name[1]=='h' && p->name[3]=='\000')){
+    if(createSwapFile(np) == -1){ 
+      printf("fork: createSwapFile failed\n");
+      freeproc(np);
+      return 0;
+    }
+    np->paging_metadata  = p->paging_metadata;
+    if(copy_swap_file(p, np)==-1){
+      printf("fork: copy_swap_file failed\n");
+      freeproc(np);
+      return 0;
+    }
+  }
+  #endif
+
 
   acquire(&wait_lock);
   np->parent = p;
@@ -358,6 +404,12 @@ exit(int status)
       fileclose(f);
       p->ofile[fd] = 0;
     }
+  }
+
+  //task2
+  if(p->swapFile != 0){ 
+    removeSwapFile(p);
+    p->swapFile = 0;
   }
 
   begin_op();
@@ -461,6 +513,10 @@ scheduler(void)
         p->state = RUNNING;
         c->proc = p;
         swtch(&c->context, &p->context);
+
+        #if NFUA || LAPA
+        update_age(p);
+        #endif
 
         // Process is done running for now.
         // It should have changed its p->state before coming back.
